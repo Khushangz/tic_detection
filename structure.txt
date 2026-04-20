@@ -1,0 +1,37 @@
+.
+├── cli.py
+├── configs
+│   ├── audio.yaml
+│   ├── eval.yaml
+│   ├── model.yaml
+│   ├── split.yaml
+│   └── tic_groups.csv
+├── __init__.py
+├── models
+│   ├── base.py
+│   ├── bilstm.py
+│   ├── factory.py
+│   └── __init__.py
+├── outputs
+├── stages
+│   ├── __init__.py
+│   ├── s00_inventory.py
+│   ├── s01_chunk.py
+│   ├── s02_extract.py
+│   ├── s03_label.py
+│   ├── s04b_filter.py
+│   ├── s04_split.py
+│   ├── s05_dataset.py
+│   ├── s06_train.py
+│   └── s07_eval.py
+├── structure.txt
+└── utils
+    ├── audio.py
+    ├── embeddings.py
+    ├── __init__.py
+    ├── io.py
+    ├── labels.py
+    ├── metrics.py
+    └── sampler.py
+
+5 directories, 29 files

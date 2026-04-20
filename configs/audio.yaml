@@ -1,0 +1,6 @@
+chunk_duration_s: 30
+stride_s: 30
+frame_duration_ms: 20
+padding_strategy: zero
+min_duration_s: 30.0
+model_name: microsoft/wavlm-base
