@@ -100,7 +100,8 @@ def _build_dataloaders(exp_dir: Path) -> tuple:
     label_config_path  = os.path.join(HOME_DIR, "configs", "label_config.json")
 
     # -- train dataset --
-    print(f"[s06] Building train dataset...")
+    cache_dir = paths_cfg.get("cache_dir", None)
+
     train_dataset = TicDataset(
         split_csv          = str(output_dir / "splits" / "file_split" / "train.csv"),
         embeddings_dir     = embeddings_dir,
@@ -108,10 +109,9 @@ def _build_dataloaders(exp_dir: Path) -> tuple:
         label_config_path  = label_config_path,
         sequence_length    = model_cfg["sequence_length"],
         sequence_stride    = model_cfg["train_stride"],
+        cache_dir          = cache_dir,
     )
 
-    # -- val dataset --
-    print(f"[s06] Building val dataset...")
     val_dataset = TicDataset(
         split_csv          = str(output_dir / "splits" / "file_split" / "val.csv"),
         embeddings_dir     = embeddings_dir,
@@ -119,7 +119,9 @@ def _build_dataloaders(exp_dir: Path) -> tuple:
         label_config_path  = label_config_path,
         sequence_length    = model_cfg["sequence_length"],
         sequence_stride    = model_cfg["eval_stride"],
+        cache_dir          = cache_dir,
     )
+
 
     # -- sampler --
     strategy = model_cfg["imbalance_strategy"]
@@ -146,7 +148,7 @@ def _build_dataloaders(exp_dir: Path) -> tuple:
         batch_size  = model_cfg["batch_size"],
         sampler     = sampler,
         shuffle     = sampler is None,
-        num_workers = 4,
+        num_workers = 8,
         pin_memory  = True,
     )
 
@@ -154,7 +156,7 @@ def _build_dataloaders(exp_dir: Path) -> tuple:
         val_dataset,
         batch_size  = model_cfg["batch_size"],
         shuffle     = False,
-        num_workers = 4,
+        num_workers = 8,
         pin_memory  = True,
     )
 
@@ -460,7 +462,7 @@ def run_train(exp_name: str = "exp_01") -> None:
         log.info(f"[s06] No class weights")
 
     # -- optimizer --
-    optimizer = torch.optim.Adam(model.parameters(), lr=model_cfg["lr"])
+    optimizer = torch.optim.Adam(model.parameters(), lr=float(model_cfg["lr"]))
 
     # -- scheduler --
     if model_cfg["scheduler"] == "cosine":

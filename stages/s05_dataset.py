@@ -52,16 +52,8 @@ class TicDataset(Dataset):
         label_config_path: str,
         sequence_length: int = 50,
         sequence_stride: int = 25,
+        cache_dir: str = None,
     ):
-        """
-        Args:
-            split_csv:           path to train.csv / val.csv / test.csv
-            embeddings_dir:      path to Embeddings_new/
-            filter_report_path:  path to filter_report.json
-            label_config_path:   path to label_config.json
-            sequence_length:     number of frames per sequence
-            sequence_stride:     step between sequence start points
-        """
         self.sequence_length = sequence_length
         self.sequence_stride = sequence_stride
 
@@ -72,71 +64,72 @@ class TicDataset(Dataset):
             label_config = json.load(f)
 
         self.excluded_groups = set(filter_report["excluded_groups"])
-        self.type_to_int = {int(k): v for k, v in label_config["type_to_int"].items()}
+        self.type_to_int     = {int(k): v for k, v in label_config["type_to_int"].items()}
         self.no_tic_int      = self.type_to_int[label_config["no_tic_label"]]
 
-        # -- load file list --
-        import pandas as pd
-        split_df = pd.read_csv(split_csv)
-        filenames = split_df["filename"].tolist()
+        # -- cache path --
+        if cache_dir is not None:
+            cache_dir  = Path(cache_dir)
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            split_name = Path(split_csv).stem
+            cache_path = cache_dir / f"{split_name}_seq{sequence_length}_str{sequence_stride}.pt"
+        else:
+            cache_path = None
 
-        # -- cache all .pt files and build index --
-        self.sequences = []  # list of (embeddings [L, D], labels [L])
-        self._cache_and_index(filenames, Path(embeddings_dir))
+        # -- load from cache or build --
+        if cache_path is not None and cache_path.exists():
+            print(f"[s05] Loading from cache: {cache_path}")
+            self.sequences = torch.load(cache_path, weights_only=False)
+            print(f"[s05] {len(self.sequences)} sequences loaded from cache")
+        else:
+            import pandas as pd
+            filenames      = pd.read_csv(split_csv)["filename"].tolist()
+            self.sequences = []
+            self._cache_and_index(filenames, Path(embeddings_dir))
+            print(f"[s05] {len(self.sequences)} sequences built")
 
-        print(f"[s05] {len(self.sequences)} sequences built")
+            if cache_path is not None:
+                torch.save(self.sequences, cache_path)
+                print(f"[s05] Cache saved to: {cache_path}")
+
         tic_seqs = sum(1 for _, labels in self.sequences if (labels != self.no_tic_int).any())
         print(f"[s05] Sequences with at least one tic frame: {tic_seqs}")
 
     def _cache_and_index(self, filenames: list, embeddings_dir: Path) -> None:
-        """
-        Load all .pt files, filter excluded groups,
-        build sequences and store in self.sequences.
-        """
         for filename in filenames:
-            # find pt file
             stem    = Path(filename).stem
-            parts   = stem.split("_")
-            patient = parts[0]
+            patient = stem.split("_")[0]
             pt_path = embeddings_dir / patient / f"{stem}.pt"
 
             if not pt_path.exists():
                 print(f"[s05] ⚠️  PT file not found, skipping: {pt_path}")
                 continue
 
-            # load and filter frames
-            frames = torch.load(pt_path, map_location="cpu")
-            frames = [
-                f for f in frames
-                if f["Group"] not in self.excluded_groups
-            ]
+            frames = torch.load(pt_path, map_location="cpu", weights_only=False)
+            frames = [f for f in frames if f["Group"] not in self.excluded_groups]
 
             if len(frames) < self.sequence_length:
                 continue
 
-            # extract embeddings and labels
-            embeddings = torch.stack([f["embedding"] for f in frames])  # [N, D]
-            labels = torch.tensor(
+            embeddings = torch.stack([f["embedding"] for f in frames])
+            labels     = torch.tensor(
                 [self.type_to_int.get(f["Type"], self.no_tic_int) for f in frames],
                 dtype=torch.long
             )
 
-            # build sequences with stride
             n_frames = embeddings.shape[0]
             for start in range(0, n_frames - self.sequence_length + 1, self.sequence_stride):
                 end = start + self.sequence_length
                 self.sequences.append((
-                    embeddings[start:end],  # [L, D]
-                    labels[start:end],      # [L]
+                    embeddings[start:end],
+                    labels[start:end],
                 ))
 
     def __len__(self) -> int:
         return len(self.sequences)
 
     def __getitem__(self, idx: int) -> tuple:
-        embeddings, labels = self.sequences[idx]
-        return embeddings, labels
-
+        return self.sequences[idx]
 def test_dataset() -> None:
     """
     Quick test to verify TicDataset loads correctly.

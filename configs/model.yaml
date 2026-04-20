@@ -1,6 +1,6 @@
-sequence_length: 50
-train_stride: 25
-eval_stride: 50
+sequence_length: 500
+train_stride: 250
+eval_stride: 500
 normalize: false
 
 model_type: bilstm
@@ -11,7 +11,7 @@ bilstm:
 
 epochs: 50
 batch_size: 32
-lr: 1e-3
+lr: 0.001
 scheduler: cosine
 imbalance_strategy: batched_oversample
 undersample_ratio: 3

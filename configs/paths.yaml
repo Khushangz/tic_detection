@@ -2,3 +2,4 @@ tic_csv: /home/kzaveri1/codes/Vocal_tics/data/filtered_ticList_metadata.csv
 new_embeddings_dir: /projects/vocaltics/data/Embeddings_new
 raw_audio_dir: /home/kzaveri1/data/DET_Audio_Data_16kHz_mono
 output_dir: /home/kzaveri1/codes/modular_pipline_package/tic_detection/outputs
+cache_dir: /projects/vocaltics/data/sequence_cache

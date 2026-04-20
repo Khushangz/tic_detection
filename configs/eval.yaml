@@ -1,0 +1,10 @@
+split: test
+voting:
+  enabled: true
+  window: 100
+  strategy: majority    # majority | mean_prob
+
+metrics: [auroc, f1, precision, recall]
+per_group: true
+save_predictions: true
+test_split: file_split  # file_split | patient_split
