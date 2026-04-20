@@ -253,6 +253,25 @@ def run_label() -> pd.DataFrame:
     log.info(f"[s03] Total no-tic frames:  {summary_df['no_tic_frames'].sum():,}")
     log.info(f"[s03] Summary saved to:     {summary_path}")
     log.info(f"[s03] Done.")
+    # -- save label config --
+    import json
+    tic_types   = sorted(tic_groups.keys())
+    type_to_int = {t: i for i, t in enumerate(tic_types)}
+    type_to_int[-100] = len(tic_types)
+    int_to_type = {v: k for k, v in type_to_int.items()}
+    label_cfg = {
+        "no_tic_label":  -100,
+        "tic_types":     tic_types,
+        "type_to_int":   type_to_int,
+        "int_to_type":   int_to_type,
+        "type_to_group": {t: tic_groups[t] for t in tic_types},
+        "group_names":   sorted(set(tic_groups.values())),
+        "num_classes":   len(tic_types) + 1,
+    }
+    label_cfg_path = Path(HOME_DIR) / "configs" / "label_config.json"
+    with open(label_cfg_path, "w") as f:
+        json.dump(label_cfg, f, indent=2)
+    log.info(f"[s03] Label config saved to: {label_cfg_path}")
 
     return summary_df
 

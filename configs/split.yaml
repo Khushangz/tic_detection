@@ -1,0 +1,15 @@
+min_train_pct: 0.75
+min_train_files: 5
+max_iterations: 1000
+seed: 42
+
+patient_split:
+  min_train_pct: 0.60
+  min_train_files: 3
+  max_iterations: 5000
+  seed: 42
+
+filter:
+  min_test_frames: 100
+  min_train_frames: 1000
+  filter_splits: [train]
