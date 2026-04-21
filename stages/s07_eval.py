@@ -214,6 +214,60 @@ def _compute_metrics(
         "mc_precision":     round(mc_precision,     4),
         "mc_recall":        round(mc_recall,        4),
     }
+    def _save_confusion_matrix(
+        all_labels: np.ndarray,
+        all_preds: np.ndarray,
+        output_path: Path,
+    ) -> None:
+        from sklearn.metrics import confusion_matrix as sk_confusion_matrix
+        
+        tic_mask   = all_labels != NO_TIC_INT
+        tic_labels = all_labels[tic_mask]
+        tic_preds  = all_preds[tic_mask]
+
+        if len(tic_labels) == 0:
+            print(f"[s07] ⚠️  No tic frames found, skipping confusion matrix")
+            return
+
+        int_to_type   = {int(k): v for k, v in label_config["int_to_type"].items()}
+        type_to_group = {int(k): v for k, v in label_config["type_to_group"].items()}
+
+        present_classes = sorted(np.unique(np.concatenate([tic_labels, tic_preds])))
+        class_names = []
+        for c in present_classes:
+            type_val   = int_to_type.get(c, c)
+            group_name = type_to_group.get(int(type_val), str(type_val)) if type_val != label_config["no_tic_label"] else "no-tic"
+            class_names.append(f"{group_name}\n({type_val})")
+
+        cm      = sk_confusion_matrix(tic_labels, tic_preds, labels=present_classes)
+        cm_norm = cm.astype(float)
+        row_sums = cm_norm.sum(axis=1, keepdims=True)
+        cm_norm  = np.divide(cm_norm, row_sums, where=row_sums != 0)
+
+        n       = len(present_classes)
+        figsize = max(10, n * 0.5)
+        fig, ax = plt.subplots(figsize=(figsize, figsize * 0.8))
+        im = ax.imshow(cm_norm, interpolation="nearest", cmap="Blues", vmin=0, vmax=1)
+        plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        ax.set_xticks(range(n))
+        ax.set_yticks(range(n))
+        ax.set_xticklabels(class_names, rotation=45, ha="right", fontsize=7)
+        ax.set_yticklabels(class_names, fontsize=7)
+        ax.set_xlabel("Predicted", fontsize=11)
+        ax.set_ylabel("True", fontsize=11)
+        ax.set_title("Confusion Matrix (tic frames only, row-normalized)", fontsize=12)
+
+        for i in range(n):
+            for j in range(n):
+                val = cm_norm[i, j]
+                if val > 0.01:
+                    ax.text(j, i, f"{val:.2f}", ha="center", va="center",
+                            fontsize=6, color="white" if val > 0.5 else "black")
+
+        fig.tight_layout()
+        fig.savefig(output_path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        print(f"[s07] Confusion matrix saved to: {output_path}")
 def _compute_per_group_metrics(
     all_labels: np.ndarray,
     all_preds: np.ndarray,
