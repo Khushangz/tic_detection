@@ -1,18 +1,19 @@
-sequence_length: 500
+sequence_length: 1500
 train_stride: 250
 eval_stride: 500
 normalize: false
 loss: binary
-model_type: bilstm
+model_type: cnn_bilstm
 bilstm:
   hidden_size: 256
   num_layers: 2
   dropout: 0.5
-epochs: 20
-batch_size: 32
+epochs: 30
+batch_size: 8
 lr: 0.0001
 scheduler: cosine
 imbalance_strategy: batched_undersample
 undersample_ratio: 3
 use_class_weights: true
 dropout: 0.5
+boundary_frames: 50

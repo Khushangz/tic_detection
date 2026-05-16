@@ -1,6 +1,6 @@
 split: test
 voting:
-  enabled: true
+  enabled: false
   window: 100
   strategy: majority    # majority | mean_prob
 

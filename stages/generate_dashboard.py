@@ -272,23 +272,30 @@ function renderDashboard(data) {{
 
   let t=`<table class="group-table"><thead><tr>
     <th>tic group</th>
-    <th class="train">train</th>
-    <th class="val">validation</th>
-    <th class="test">test</th>
-    <th>total</th>
+    <th class="train">train frames</th>
+    <th class="train">train events</th>
+    <th class="val">val frames</th>
+    <th class="val">val events</th>
+    <th class="test">test frames</th>
+    <th class="test">test events</th>
+    <th>total frames</th>
   </tr></thead><tbody>`;
 
   groups.forEach(g=>{{
     const d=data.group_distribution[g];
     const tot=d.train+d.val+d.test;
     const pct=v=>maxTotal>0?(v/maxTotal*100).toFixed(0):0;
+    const ec = data.group_event_counts?.[g] || {{train:0,val:0,test:0}};
     t+=`<tr>
-      <td><span class="group-name">${{g}}</span></td>
-      <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill train" style="width:${{pct(d.train)}}%"></div></div><span class="bar-num">${{fmt(d.train)}}</span></div></td>
-      <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill val"   style="width:${{pct(d.val)}}%"></div></div><span class="bar-num">${{fmt(d.val)}}</span></div></td>
-      <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill test"  style="width:${{pct(d.test)}}%"></div></div><span class="bar-num">${{fmt(d.test)}}</span></div></td>
-      <td style="color:var(--muted)">${{fmt(tot)}}</td>
-    </tr>`;
+        <td><span class="group-name">${{g}}</span></td>
+        <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill train" style="width:${{pct(d.train)}}%"></div></div><span class="bar-num">${{fmt(d.train)}}</span></div></td>
+        <td style="color:var(--train);font-size:11px">${{ec.train}} events</td>
+        <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill val" style="width:${{pct(d.val)}}%"></div></div><span class="bar-num">${{fmt(d.val)}}</span></div></td>
+        <td style="color:var(--val);font-size:11px">${{ec.val}} events</td>
+        <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill test" style="width:${{pct(d.test)}}%"></div></div><span class="bar-num">${{fmt(d.test)}}</span></div></td>
+        <td style="color:var(--test);font-size:11px">${{ec.test}} events</td>
+        <td style="color:var(--muted)">${{fmt(tot)}}</td>
+      </tr>`;
   }});
   t+='</tbody></table>';
   document.getElementById('group-table-wrap').innerHTML=t;
